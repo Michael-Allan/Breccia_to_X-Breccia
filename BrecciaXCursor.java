@@ -12,13 +12,13 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.*;
 
 import static Breccia.parser.Project.newSourceReader;
+import static Breccia.parser.ParseState.Symmetry.*;
 import static Breccia.parser.Typestamp.*;
 
 
-/** A reusable translator of Breccia to X-Breccia.
-  *
-  *     @see <a href='http://reluk.ca/project/Breccia/XML/language_definition.brec'>
-  *       X-Breccia language definition</a>
+/** A reusable translator of Breccia to X-Breccia.  This translator supports extensions of Breccia
+  * that model their extended fractal states as instances of `Fractum` and `FractumEnd`,
+  * and extended terminal states (if any) as instances of `FileFractum` and `FileFractumEnd`.
   */
 public class BrecciaXCursor implements ReusableCursor, XMLStreamReader, XStreamContants {
 
@@ -76,11 +76,14 @@ public class BrecciaXCursor implements ReusableCursor, XMLStreamReader, XStreamC
       */
     public @Override void markupSource( final Reader r ) throws ParseError {
         sourceCursor.markupSource( r );
-        final int t = sourceCursor.state().typestamp();
-        if( t == fileFractum ) eventType = START_DOCUMENT;
-        else {
-            assert t == empty;
-            eventType = EMPTY; }}
+        final ParseState initialParseState = sourceCursor.state();
+        if( initialParseState.typestamp() == empty ) {
+            eventType = EMPTY;
+            hasNext = false; }
+        else { // TODO here: If this file fractum has a head, then translate it as for those at `next`.
+            assert initialParseState instanceof FileFractum;
+            eventType = START_DOCUMENT;
+            hasNext = true; }}
 
 
 
@@ -233,7 +236,7 @@ public class BrecciaXCursor implements ReusableCursor, XMLStreamReader, XStreamC
 
 
 
-    public @Override boolean hasNext() { return eventType != END_DOCUMENT && eventType != EMPTY; }
+    public @Override boolean hasNext() { return hasNext; }
 
 
 
@@ -245,42 +248,38 @@ public class BrecciaXCursor implements ReusableCursor, XMLStreamReader, XStreamC
       *   of type {@linkplain ParseError ParseError} against the Breccian source.
       */
     public @Override int next() throws XMLStreamException {
-        if( !hasNext() ) throw new java.util.NoSuchElementException();
-        final ParseState next; {
-            final ParseState present = sourceCursor.state();
-            if( present.typestamp() == fileFractumEnd ) return eventType = END_DOCUMENT;
-            assert !present.isFinal();
-            try { next = sourceCursor.next(); }
-            catch( ParseError x ) { throw new XMLStreamException( x ); }}
-        return eventType = switch( next.typestamp() ) {
-            // (TODO) For any fractum `f` that has a head, translate it as follows.
-            // A) Emit a `Head` start tag.
-            // B) Use `f.iterator` to recursively translate each parsed head component `c`, as follows.
-            //    1) Emit a start tag of `c.tagName`.
-            //    2) Translate `c` as follows.
-            //       b) If `c.isComposite`, then use `c.iterator` to recursively translate
-            //          each parsed component of `c`.
-            //       a) Else emit `c.text`.
-            //    3) Emit the corresponding end tag.
-            // C) Emit a `Head` end tag.
-            case associativeReference    -> START_ELEMENT;
-            case associativeReferenceEnd ->   END_ELEMENT;
-            case division                -> START_ELEMENT;
-            case divisionEnd             ->   END_ELEMENT;
-            case empty -> throw new IllegalStateException(); /* An initial and final state,
-              impossible here owing both to `markupSource` and the `hasNext()` guard above. */
-            case error -> throw new IllegalStateException(); /* A final state,
-              impossible here owing to the `hasNext()` guard above. */
-            case fileFractum             -> START_ELEMENT;
-            case fileFractumEnd          ->   END_ELEMENT; /* End of XML document element;
-                                                              next call ends document. */
-            case genericCommandPoint     -> START_ELEMENT;
-            case genericCommandPointEnd  ->   END_ELEMENT;
-            case genericPoint            -> START_ELEMENT;
-            case genericPointEnd         ->   END_ELEMENT;
-            case privatizer              -> START_ELEMENT;
-            case privatizerEnd           ->   END_ELEMENT;
-            default -> throw new IllegalStateException(); };} // All are covered.
+        if( !hasNext ) throw new java.util.NoSuchElementException();
+        if( sourceCursor.state().isFinal() ) { // Then it remains to end the translated document.
+            assert sourceCursor.state() instanceof FileFractumEnd; /* The only alternatives are `empty`
+              and `error`, both impossible unless the `hasNext` of the guard above is incorrect. */
+            eventType = END_DOCUMENT;
+            hasNext = false;
+            return eventType; }
+        final ParseState newParseState;
+        try {
+            newParseState = sourceCursor.next();
+            eventType = switch( newParseState.symmetry() ) {
+                case asymmetric -> throw new IllegalStateException(); /* A state of `error` or `empty`,
+                  both impossible to get from the `sourceCursor.next` above. */
+                case fractalStart -> START_ELEMENT; /* TODO here, and at `markupSource`:
+                  For any of these fractal states `f` that has a head, translate it as follows.
+                  A) Emit a `Head` start tag.
+                  B) Recursively translate each parsed head component `c`, as follows.
+                     1) Emit a start tag of `c.tagName`.
+                     2) Translate `c` as follows.
+                        b) If `c.isComposite`, then  recursively translate each parsed component of `c`.
+                        a) Else emit `c.text`.
+                     3) Emit the corresponding end tag.
+                  C) Emit a `Head` end tag. */
+                case fractalEnd -> END_ELEMENT; };} /* If the parse state here is a `FileFractumEnd`,
+                  then this ends the document element and the next call will end the document itself. */
+        catch( final ParseError x ) {
+            eventType = ERROR;
+            hasNext = false;
+            throw new XMLStreamException( x ); }
+        assert !newParseState.isFinal() || newParseState instanceof FileFractumEnd; // Wherefore:
+        hasNext = true;
+        return eventType; }
 
 
 
@@ -326,11 +325,16 @@ public class BrecciaXCursor implements ReusableCursor, XMLStreamReader, XStreamC
 ////  P r i v a t e  ////////////////////////////////////////////////////////////////////////////////////
 
 
-    private final BrecciaCursor sourceCursor;
+    private int eventType = ERROR;
 
 
 
-    private int eventType; }
+    private boolean hasNext = false;
+
+
+
+    private final BrecciaCursor sourceCursor; }
+
 
 
                                                    // Copyright © 2020-2021  Michael Allan.  Licence MIT.
