@@ -1,0 +1,26 @@
+Installation instructions for Breccia X-Breccia Translator
+
+    initial set-up \ Only for projects with buildable software.
+        1+ Ensure the following projects are installed.
+            • Makeshift
+                : see http://reluk.ca/project/building/Makeshift/
+            • Breccia Parser
+                : see http://reluk.ca/project/Breccia/parser/
+        2+ Install the files of the present project.
+            >+ cd <command-directory>/
+                / The command directory is where project installations are accessible by their
+                  proper paths.  The present project, for example, will shortly be accessible
+                  at `Breccia/XML/translator`.
+                    : see `^^command directory$` @ http://reluk.ca/project/lexicon.brec
+            >+ git clone http://reluk.ca/var/repo/git/Breccia_X-Breccia_Translator.git Breccia/XML/translator
+        + Build the software.
+            : see http://reluk.ca/project/building/Makeshift/bin/build.brec
+            >+ build Breccia/XML/translator class-files
+
+    Web publication
+        • Breccian files
+            : join @ http://reluk.ca/project/Breccia/project_installation.brec
+
+
+
+                                                         \ Copyright © 2021  Michael Allan.  Licence MIT.
