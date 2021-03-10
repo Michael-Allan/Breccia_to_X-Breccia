@@ -13,8 +13,8 @@ import static Breccia.parser.Typestamp.*;
 
 /** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor
   * over a series of discrete parse states.  This translator is designed to support any extension
-  * of Breccia that models its extended fractal states as instances of `Fractum` and `FractumEnd`,
-  * and its extended file-fractal states, if any, as instances of `FileFractum` and `FileFractumEnd`.
+  * of Breccia that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
+  * and its extended file-fractal states, if any, as instances of `FileFractum` and `FileFractum.End`.
   */
 public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 
@@ -238,7 +238,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
     public @Override int next() throws XMLStreamException {
         if( !hasNext ) throw new java.util.NoSuchElementException();
         if( source.state().isFinal() ) { // Then it remains to end the translated document.
-            assert source.state() instanceof FileFractumEnd; /* The only alternatives are `empty`
+            assert source.state() instanceof FileFractum.End; /* The only alternatives are `empty`
               and `error`, both impossible unless the `hasNext` of the guard above is incorrect. */
             eventType = END_DOCUMENT;
             hasNext = false;
@@ -259,13 +259,13 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
                         a) Else emit `c.text`.
                      3) Emit the corresponding end tag.
                   C) Emit a `Head` end tag. */
-                case fractalEnd -> END_ELEMENT; };} /* If the parse state here is a `FileFractumEnd`,
+                case fractalEnd -> END_ELEMENT; };} /* If the parse state here is a `FileFractum.End`,
                   then this ends the document element and the next call will end the document itself. */
         catch( final ParseError x ) {
             eventType = ERROR;
             hasNext = false;
             throw new XMLStreamException( x ); }
-        assert !newParseState.isFinal() || newParseState instanceof FileFractumEnd; // Wherefore:
+        assert !newParseState.isFinal() || newParseState instanceof FileFractum.End; // Wherefore:
         hasNext = true;
         return eventType; }
 
