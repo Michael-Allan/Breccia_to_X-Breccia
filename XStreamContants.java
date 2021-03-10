@@ -18,7 +18,8 @@ public interface XStreamContants {
 
 
     /** A formal state of error.  This is a final state, rendering the translator unusable
-      * for the present markup source.  It results from any occurence there of a parse error.
+      * for the present markup source.  It results from any occurence of a parse error
+      * in the markup source, or detection there of an invalid state.
       *
       *     @see ParseError
       *     @see Breccia.parser.Error
