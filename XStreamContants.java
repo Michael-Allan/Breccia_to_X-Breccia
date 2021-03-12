@@ -17,14 +17,15 @@ public interface XStreamContants {
     public static final int EMPTY = 174_358_466;
 
 
-    /** A formal state of error.  This is a final state, rendering the translator unusable
+
+    /** The translation has halted abnormally.  This is a final state, rendering the translator unusable
       * for the present markup source.  It results from any occurence of a parse error
       * in the markup source, or detection there of an invalid state.
       *
       *     @see ParseError
-      *     @see Breccia.parser.Error
+      *     @see Breccia.parser.Halt
       */
-    public static final int ERROR = 174_358_467; }
+    public static final int HALT = 174_358_467; }
 
 
 

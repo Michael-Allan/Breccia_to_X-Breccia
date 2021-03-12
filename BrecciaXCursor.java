@@ -25,11 +25,11 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
       *     @throws IllegalStateException If `source.{@linkplain MarkupCursor#state() state}`
       *       is not an {@linkplain ParseState#isInitial() initial state}.
       */
-    public void markupSource( final MarkupCursor s ) {
-        source = s;
+    public void markupSource( final MarkupCursor source ) {
+        this.source = source;
         final ParseState initialParseState = source.state();
         if( !initialParseState.isInitial() ) {
-            eventType = ERROR;
+            eventType = HALT;
             hasNext = false;
             throw new IllegalStateException( "Markup source in non-initial state" ); }
         if( initialParseState.typestamp() == empty ) {
@@ -247,7 +247,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
         try {
             newParseState = source.next();
             eventType = switch( newParseState.symmetry() ) {
-                case asymmetric -> throw new IllegalStateException(); /* A state of `error` or `empty`,
+                case asymmetric -> throw new IllegalStateException(); /* A state of `halt` or `empty`,
                   both impossible to get from the `source.next` above. */
                 case fractalStart -> START_ELEMENT; /* TODO here, and at `markupSource`:
                   For any of these fractal states `f` that has a head, translate it as follows.
@@ -262,7 +262,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
                 case fractalEnd -> END_ELEMENT; };} /* If the parse state here is a `FileFractum.End`,
                   then this ends the document element and the next call will end the document itself. */
         catch( final ParseError x ) {
-            eventType = ERROR;
+            eventType = HALT;
             hasNext = false;
             throw new XMLStreamException( x ); }
         assert !newParseState.isFinal() || newParseState instanceof FileFractum.End; // Wherefore:
@@ -313,7 +313,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 ////  P r i v a t e  ////////////////////////////////////////////////////////////////////////////////////
 
 
-    private int eventType = ERROR;
+    private int eventType = HALT;
 
 
 
