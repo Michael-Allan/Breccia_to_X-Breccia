@@ -22,10 +22,10 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
     /** Begins translating a new source of markup comprising a single file fractum.  Sets the translation
       * state either to `{@linkplain #EMPTY EMPTY}` or to `{@linkplain #START_DOCUMENT START_DOCUMENT}`.
       *
-      *     @throws IllegalStateException If `source.{@linkplain MarkupCursor#state() state}`
+      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
       *       is not an {@linkplain ParseState#isInitial() initial state}.
       */
-    public void markupSource( final MarkupCursor source ) {
+    public void markupSource( final Cursor source ) {
         this.source = source;
         final ParseState initialParseState = source.state();
         if( !initialParseState.isInitial() ) {
@@ -46,10 +46,10 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
     /** Translates the markup of the given source, feeding each state of the translation to `sink`
       * till all are exhausted.  Calling this method will abort any translation already in progress.
       *
-      *     @throws IllegalStateException If `source.{@linkplain MarkupCursor#state() state}`
+      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
       *       is not {@linkplain ParseState#isInitial() initial}.
       */
-    public void perState( final MarkupCursor source, final IntConsumer sink ) throws ParseError {
+    public void perState( final Cursor source, final IntConsumer sink ) throws ParseError {
         markupSource( source );
         for( ;; ) {
             sink.accept( eventType );
@@ -63,11 +63,10 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
       * till either all are exhausted or `sink` returns false.  Calling this method will abort
       * any translation already in progress.
       *
-      *     @throws IllegalStateException If `source.{@linkplain MarkupCursor#state() state}`
+      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
       *       is not {@linkplain ParseState#isInitial() initial}.
       */
-    public void perStateConditionally( final MarkupCursor source, final IntPredicate sink )
-          throws ParseError {
+    public void perStateConditionally( final Cursor source, final IntPredicate sink ) throws ParseError {
         markupSource( source );
         while( sink.test(eventType) && hasNext() ) {
             try { next(); }
@@ -321,7 +320,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 
 
 
-    private MarkupCursor source; }
+    private Cursor source; }
 
 
 
