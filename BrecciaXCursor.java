@@ -251,6 +251,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
                 case fractalStart -> START_ELEMENT; /* TODO here, and at `markupSource`:
                   For any of these fractal states `f` that has a head, translate it as follows.
                   A) Emit a `Head` start tag.
+                      - Except in the edge case of a headless file fractum.
                   B) Recursively translate each parsed head component `c`, as follows.
                      1) Emit a start tag of `c.tagName`.
                      2) Translate `c` as follows.
