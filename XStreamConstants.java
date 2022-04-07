@@ -6,7 +6,7 @@ package Breccia.XML.translator;
   *
   *     @see javax.xml.stream.XMLStreamConstants
   */
-public interface XStreamContants {
+public interface XStreamConstants {
 
 
     /** Nothing, no markup to translate.  Occurs on attempting to translate an empty source of markup.
