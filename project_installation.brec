@@ -6,6 +6,8 @@ Installation instructions for Breccia X-Breccia Translator
                 : see http://reluk.ca/project/building/Makeshift/
             • Breccia Parser
                 : see http://reluk.ca/project/Breccia/parser/
+            • The Java programming project
+                : see http://reluk.ca/project/Java/
         2+ Install the files of the present project.
             >+ cd <command-directory>/
                 / The command directory is where project installations are accessible by their
@@ -29,4 +31,4 @@ Installation instructions for Breccia X-Breccia Translator
 
 
 
-                                                         \ Copyright © 2021  Michael Allan.  Licence MIT.
+                                                    \ Copyright © 2021-2022  Michael Allan.  Licence MIT.

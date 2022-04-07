@@ -1,14 +1,18 @@
 package Breccia.XML.translator;
 
 import Breccia.parser.*;
+import Java.IntArrayExtensor;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.stream.*;
 
 import static Breccia.parser.ParseState.Symmetry.*;
 import static Breccia.parser.Typestamp.*;
+import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
 
 
 /** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor
@@ -16,7 +20,7 @@ import static Breccia.parser.Typestamp.*;
   * of Breccia that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
   * and its extended file-fractal states, if any, as instances of `FileFractum` and `FileFractum.End`.
   */
-public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
+public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     /** Begins translating a new source of markup comprising a single file fractum.  Sets the translation
@@ -35,10 +39,11 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
         if( initialParseState.typestamp() == empty ) {
             eventType = EMPTY;
             hasNext = false; }
-        else { // TODO here: If this file fractum has a head, then translate it as for those at `next`.
+        else {
+            eventType = START_DOCUMENT; /* This starts the document.  The first call to `next` will
+              start the document element, which for X-Breccia is always that of the file fractum. */
             assert initialParseState instanceof FileFractum;
-            eventType = START_DOCUMENT; /* This starts the document.
-              The first call to `next` will start the document element. */
+            translationProcess = interstate_traversal;
             hasNext = true; }}
 
 
@@ -137,7 +142,11 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 
 
 
-    public @Override String getLocalName() { throw new UnsupportedOperationException(); }
+    public @Override String getLocalName() {
+        if( eventType == END_ELEMENT ) throw new UnsupportedOperationException(
+          "Method `getLocalName` for `END_ELEMENT` is presently unsupported." );
+        if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
+        return localName; }
 
 
 
@@ -188,8 +197,7 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 
 
 
-    public @Override Object getProperty( String name) throws IllegalArgumentException {
-        throw new UnsupportedOperationException(); }
+    public @Override Object getProperty( String name) { throw new UnsupportedOperationException(); }
 
 
 
@@ -201,9 +209,19 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 
 
 
-    public @Override int getTextCharacters( int sourceStart, char[] target, int targetStart,
-          int length ) {
-        throw new UnsupportedOperationException(); }
+    public @Override int getTextCharacters( final int sourceStart, final char[] target,
+          final int targetStart, int length ) {
+        if( eventType != CHARACTERS ) throw wrongEventType();
+        if( sourceStart < 0 ) throw new IndexOutOfBoundsException( sourceStart );
+        final int lengthAvailable = characters.length() - sourceStart;
+        if( length > lengthAvailable ) length = lengthAvailable;
+        final int tEnd = targetStart + length;
+        if( targetStart < 0 || tEnd > target.length ) throw new IndexOutOfBoundsException( targetStart );
+        for( int s = sourceStart, t = targetStart; t < tEnd; ++s, ++t ) target[t] = characters.charAt(s);
+        return length; } /* The abpve might be speeded if the character sequences of the source cursor
+          exposed (optionally) their backing buffer.  But then the more flexible and potentially faster
+          methods `getTextStart`, getTextLength` and `getTextCharacters` should be supported *instead*
+          of the present method. */
 
 
 
@@ -236,37 +254,119 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
       */
     public @Override int next() throws XMLStreamException {
         if( !hasNext ) throw new java.util.NoSuchElementException();
-        if( source.state().isFinal() ) { // Then it remains to end the translated document.
-            assert source.state() instanceof FileFractum.End; /* The only alternatives are `empty`
-              and `error`, both impossible unless the `hasNext` of the guard above is incorrect. */
-            eventType = END_DOCUMENT;
-            hasNext = false;
-            return eventType; }
-        final ParseState newParseState;
-        try {
-            newParseState = source.next();
-            eventType = switch( newParseState.symmetry() ) {
-                case asymmetric -> throw new IllegalStateException(); /* A state of `halt` or `empty`,
-                  both impossible to get from the `source.next` above. */
-                case fractalStart -> START_ELEMENT; /* TODO here, and at `markupSource`:
-                  For any of these fractal states `f` that has a head, translate it as follows.
-                  A) Emit a `Head` start tag.
-                      - Except in the edge case of a headless file fractum.
-                  B) Recursively translate each parsed head component `c`, as follows.
-                     1) Emit a start tag of `c.tagName`.
-                     2) Translate `c` as follows.
-                        b) If `c.isComposite`, then  recursively translate each parsed component of `c`.
-                        a) Else emit `c.text`.
-                     3) Emit the corresponding end tag.
-                  C) Emit a `Head` end tag. */
-                case fractalEnd -> END_ELEMENT; };} /* If the parse state here is a `FileFractum.End`,
-                  then this ends the document element and the next call will end the document itself. */
-        catch( final ParseError x ) {
-            eventType = HALT;
-            hasNext = false;
-            throw new XMLStreamException( x ); }
-        assert !newParseState.isFinal() || newParseState instanceof FileFractum.End; // Wherefore:
-        hasNext = true;
+        switch( translationProcess ) {
+            case interstate_traversal -> { /* Traversing the parse states of the Breccian source.
+                   Normally each of the parse states reflects a fractal head.  After emitting its
+                   start tag, the translation process typically switches to `head_encapsulation`. */
+                ParseState state = source.state();
+                if( state.isFinal() ) { // Then it remains to end the translated document.
+                    assert state instanceof FileFractum.End; /* The alternatives are `empty` and `error`,
+                      both of which are impossible unless the `hasNext` of the guard above is wrong. */
+                    eventType = END_DOCUMENT;
+                    hasNext = false;
+                    return eventType; }
+                if( eventType != START_DOCUMENT ) { // If not `source` already at next state, that is.
+                    try { state = source.next(); } catch( final ParseError x ) { throw halt( x ); }}
+                assert !state.isFinal() || state instanceof FileFractum.End;
+                switch( state.symmetry() ) {
+                    case asymmetric -> throw new IllegalStateException(); /* A state of `halt`
+                      or `empty`, neither of which could have come from the `source.next` above. */
+                    case fractalStart -> {
+                        eventType = START_ELEMENT;
+                        final Fractum fractum = source.asFractum();
+                        localName = fractum.tagName();
+
+                      // clean up, preparing for subsequent events
+                      // ┈┈┈┈┈┈┈┈
+                        final List<? extends Markup> components;
+                        try { components = fractum.components(); }
+                        catch( final ParseError x ) { throw halt( x ); }
+                        if( components.isEmpty() ) {
+                            if( fractum.text().isEmpty() ) {            // a) The fractum is headless;
+                                assert fractum instanceof FileFractum; //    it must be a file fractum.
+                                break; } // Continuing with `interstate_traversal`.
+                            this.components = null;                  // b) The fractal head is flat.
+                            this.flatMarkup = fractum; }            //
+                        else {                                     // c) The fractal head is composite.
+                            this.components = components;
+                            this.componentIndex = 0;
+                            assert componentsStack.isEmpty() && componentIndexStack.isEmpty(); }
+                        translationProcess = head_encapsulation;
+                        eventTypeNext = START_ELEMENT; }
+                    case fractalEnd -> {
+                        eventType = END_ELEMENT; }}} /* If the parse state here is `FileFractum.End`,
+                          then this ends the document element and the next call will end the document. */
+            case head_encapsulation -> { /* Encapsulating a fractal head.  This process emits either:
+                  a) an opening `Head` tag, then switches to `head_content_traversal'; or
+                  b) a closing `Head` tag, then switches back to `interstate_traversal`. */
+                eventType = eventTypeNext;
+                if( eventType == START_ELEMENT ) {
+                    localName = "Head";
+
+                  // clean up, preparing for the next event
+                  // ┈┈┈┈┈┈┈┈
+                    translationProcess = head_content_traversal;
+                    if( components == null ) eventTypeNext = CHARACTERS;
+                    else assert eventTypeNext == START_ELEMENT; }
+                else {
+                    assert eventType == END_ELEMENT;
+
+                  // clean up, preparing for the next event
+                  // ┈┈┈┈┈┈┈┈
+                    translationProcess = /*back to*/interstate_traversal; }}
+            case head_content_traversal -> { /* Traversing the markup content of a fractal head.
+                  This process traverses in depth the content of the head, emitting XML events
+                  to reflect in turn each instance of a component, subcomponent or flat markup,
+                  then switches the process back to one of `head_encapsulation`. */
+                eventType = eventTypeNext;
+                if( eventType == START_ELEMENT ) {
+                    final Markup component = components.get( componentIndex );
+                    localName = component.tagName();
+
+                  // clean up, preparing for the next event
+                  // ┈┈┈┈┈┈┈┈
+                    final List<? extends Markup> subcomponents;
+                    try { subcomponents = component.components(); }
+                    catch( final ParseError x ) { throw halt( x ); }
+                    if( subcomponents.size() > 0 ) { // Then descend the component hierarchy.
+                        componentsStack.add( components );
+                        components = subcomponents;
+                        componentIndexStack.add( componentIndex );
+                        componentIndex = 0;
+                        assert eventTypeNext == START_ELEMENT; }
+                    else {
+                        flatMarkup = component;
+                        eventTypeNext = CHARACTERS; }} // No next subcomponent, only flat markup.
+                else if( eventType == CHARACTERS ) {
+                    characters = flatMarkup.text();
+
+                  // clean up, preparing for the next event
+                  // ┈┈┈┈┈┈┈┈
+                    eventTypeNext = END_ELEMENT; // This ends either the present component,
+                    if( components == null ) {  // or (with the code herein) the fractal head.
+                        assert flatMarkup instanceof Fractum;
+                        translationProcess = /*back to*/head_encapsulation; }} // To end it.
+                else {
+                    assert eventType == END_ELEMENT;
+
+                  // clean up, preparing for the next event
+                  // ┈┈┈┈┈┈┈┈
+                    for( ;; ){
+                        if( ++componentIndex/*to the next sibling*/ < components.size() ) {
+                            eventTypeNext = START_ELEMENT;
+                            break; }
+                        // No sibling remains at this level, so try ascending the component hierarchy.
+                        int depth = componentsStack.size();
+                        assert depth == componentIndexStack.length; // Both stacks are kept sync.
+                        if( depth == 0 ) { // Cannot ascend, no further components.
+                            translationProcess = /*back to*/head_encapsulation;
+                            assert eventTypeNext == END_ELEMENT;
+                            break; }
+                        componentIndexStack.length = --depth;
+                        components = /*those of the parent*/componentsStack.remove( depth );
+                        componentIndex = /*recall it*/componentIndexStack.array[depth]; }}}}
+        assert eventType == START_ELEMENT || eventType == CHARACTERS || eventType == END_ELEMENT;
+          // These plus `EMPTY`, `START_DOCUMENT`, `END_DOCUMENT` and `HALT` alone are emitted.
         return eventType; }
 
 
@@ -313,7 +413,44 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 ////  P r i v a t e  ////////////////////////////////////////////////////////////////////////////////////
 
 
+    CharSequence characters;
+
+
+
+    /** Index of a component within {@linkplain #components components}.
+      */
+    private int componentIndex;
+
+
+
+    private final IntArrayExtensor componentIndexStack = new IntArrayExtensor( new int[0x100] );
+
+
+
+    private List<? extends Markup> components;
+
+
+
+    private final ArrayList<List<? extends Markup>> componentsStack = new ArrayList<>( 0x100 );
+
+
+
     private int eventType = HALT;
+
+
+
+    private int eventTypeNext; // Used only for `translationProcess` ≠ `interstate_traversal`.
+
+
+
+    private Markup flatMarkup;
+
+
+
+    private XMLStreamException halt( final ParseError x ) {
+        eventType = HALT;
+        hasNext = false;
+        return new XMLStreamException( x ); }
 
 
 
@@ -321,8 +458,28 @@ public class BrecciaXCursor implements XStreamContants, XMLStreamReader {
 
 
 
-    private Cursor source; }
+    private String localName;
 
 
 
-                                                   // Copyright © 2020-2021  Michael Allan.  Licence MIT.
+    private Cursor source;
+
+
+
+    static enum TranslationProcess { // Access is non-private only to allow a static `import` at top.
+        interstate_traversal,
+        head_encapsulation,
+        head_content_traversal }
+
+
+
+    private TranslationProcess translationProcess;
+
+
+
+    private static IllegalStateException wrongEventType() {
+        return new IllegalStateException( "Wrong type of parse event" ); }}
+
+
+
+                                                   // Copyright © 2020-2022  Michael Allan.  Licence MIT.
