@@ -16,9 +16,12 @@ import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
 
 
 /** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor
-  * over a series of discrete parse states.  This translator is designed to support any extension
+  * over a series of discrete parse states.  This translator suffices (as is) to support any extension
   * of Breccia that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
-  * and its extended file-fractal states, if any, as instances of `FileFractum` and `FileFractum.End`.
+  * and extended file-fractal states (if any) as instances of `FileFractum` and `FileFractum.End`. *//*
+  *
+  * For the XML event types actually emitted by this translator (at present), see the `assert` statement
+  * and comment at the foot of method `next`.
   */
 public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
