@@ -366,20 +366,22 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
-                    for( ;; ){
-                        if( ++componentIndex/*to the next sibling*/ < components.size() ) {
-                            eventTypeNext = START_ELEMENT;
-                            break; }
-                        // No sibling remains at this level, so try ascending the component hierarchy.
-                        int depth = componentsStack.size();
-                        assert depth == componentIndexStack.length; // Both stacks are kept sync.
-                        if( depth == 0 ) { // Cannot ascend, no further components.
-                            translationProcess = /*back to*/head_encapsulation;
-                            assert eventTypeNext == END_ELEMENT;
-                            break; }
-                        componentIndexStack.length = --depth;
-                        components = /*those of the parent*/componentsStack.remove( depth );
-                        componentIndex = /*recall it*/componentIndexStack.array[depth]; }}}}
+                    if( ++componentIndex/*to the next sibling*/ < components.size() ) {
+                        eventTypeNext = START_ELEMENT;
+                        break; }
+                    // No sibling remains at this level, so try ascending the component hierarchy.
+                    int depth = componentsStack.size();
+                    assert depth == componentIndexStack.length; // Both stacks are kept sync.
+                    if( depth == 0 ) { // Cannot ascend, no further components.
+                        translationProcess = /*back to*/head_encapsulation;
+                        assert eventTypeNext == END_ELEMENT;
+                        break; }
+                    componentIndexStack.length = --depth;
+                    components = /*those of the parent*/componentsStack.remove( depth );
+                    componentIndex = /*recall it*/componentIndexStack.array[depth];
+                    if( ++componentIndex/*to the next sibling of the parent*/ < components.size() ) {
+                        eventTypeNext = START_ELEMENT; }
+                    else assert eventTypeNext == END_ELEMENT; }}} // So ending the parent.
         assert eventType == START_ELEMENT || eventType == CHARACTERS || eventType == END_ELEMENT;
           // These plus `EMPTY`, `START_DOCUMENT`, `END_DOCUMENT` and `HALT` alone are emitted.
         return eventType; }
