@@ -255,7 +255,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override String getVersion() { throw new UnsupportedOperationException(); }
+    public @Override String getVersion() { return null; }
 
 
 
