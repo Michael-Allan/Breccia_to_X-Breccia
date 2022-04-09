@@ -92,8 +92,6 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
    // ━━━  X M L   S t r e a m   R e a d e r  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
-    /** Does nothing, this translator maintains no resource that needs freeing.
-      */
     public @Override void close() {}
 
 
