@@ -247,7 +247,9 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override int getTextLength() { throw new UnsupportedOperationException(); }
+    public @Override int getTextLength() {
+        if( eventType != CHARACTERS ) throw wrongEventType();
+        return markup.text().length(); }
 
 
 
