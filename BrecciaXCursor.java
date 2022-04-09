@@ -153,8 +153,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     public @Override String getLocalName() {
-        if( eventType == END_ELEMENT ) throw new UnsupportedOperationException(
-          "Method `getLocalName` for `END_ELEMENT` is presently unsupported." );
+        if( eventType == END_ELEMENT ) throw unsupportedForEndElement( "getLocalName" );
         if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
         return localName; }
 
@@ -164,7 +163,10 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override QName getName() { throw new UnsupportedOperationException(); }
+    public @Override QName getName() {
+        if( eventType == END_ELEMENT ) throw unsupportedForEndElement( "getName" );
+        if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
+        return new QName( namespace, localName ); }
 
 
 
@@ -542,6 +544,12 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     private TranslationProcess translationProcess;
+
+
+
+    private static UnsupportedOperationException unsupportedForEndElement( final String methodName ) {
+        return new UnsupportedOperationException( "Method `" + methodName
+          + "` for `END_ELEMENT` is presently unsupported." ); }
 
 
 
