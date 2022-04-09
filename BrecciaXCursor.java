@@ -98,7 +98,9 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override int getAttributeCount() { throw new UnsupportedOperationException(); }
+    public @Override int getAttributeCount() {
+     // if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
+        return 0; }
 
 
 
