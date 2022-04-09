@@ -42,7 +42,9 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
         if( !initialParseState.isInitial() ) {
             halt();
             throw new IllegalStateException( "Markup source in non-initial state" ); }
-        if( initialParseState.typestamp() == empty ) {
+        namespaceCount = 0;
+        if( initialParseState.isFinal() ) {
+            assert initialParseState.typestamp() == empty;
             eventType = EMPTY;
             location = locationUnknown;
             hasNext = false; }
@@ -127,7 +129,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override String getAttributeValue( String namespaceURI, String localName ) {
+    public @Override String getAttributeValue( String namespace, String localName ) {
         throw new UnsupportedOperationException(); }
 
 
@@ -171,21 +173,30 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override int getNamespaceCount() { throw new UnsupportedOperationException(); }
+    public @Override int getNamespaceCount() {
+     // if( eventType != START_ELEMENT && eventType != END_ELEMENT ) throw wrongEventType();
+     //   // As per contract.
+        return namespaceCount; }
 
 
 
-    public @Override String getNamespacePrefix( int index ) {
-        throw new UnsupportedOperationException(); }
+    public @Override String getNamespacePrefix( final int n ) {
+     // if( eventType != START_ELEMENT && eventType != END_ELEMENT ) throw wrongEventType();
+     //   // As per contract.
+        if( n < 0 || n >= namespaceCount ) throw new IndexOutOfBoundsException( n );
+        return null; } // No prefix, the namespace declared here is the default namespace.
 
 
 
-    public @Override String getNamespaceURI() { throw new UnsupportedOperationException(); }
+    public @Override String getNamespaceURI() { return namespace; }
 
 
 
-    public @Override String getNamespaceURI( int index ) { throw new UnsupportedOperationException(); }
-
+    public @Override String getNamespaceURI( final int n ) {
+     // if( eventType != START_ELEMENT && eventType != END_ELEMENT ) throw wrongEventType();
+     //   // As per contract.
+        if( n < 0 || n >= namespaceCount ) throw new IndexOutOfBoundsException( n );
+        return namespace; }
 
 
     public @Override String getNamespaceURI( String prefix ) {
@@ -272,12 +283,16 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                     assert state instanceof FileFractum.End; /* The alternatives are `empty` and `error`,
                       both of which are impossible unless the `hasNext` of the guard above is wrong. */
                     eventType = END_DOCUMENT;
+                    namespaceCount = 0;
                     location = locationUnknown;
                     hasNext = false;
                     return eventType; }
-                if( eventType != START_DOCUMENT ) { // If not `source` already at next state, that is.
+                if( /*old*/eventType == START_DOCUMENT ) { // Then already `source` is at the next state.
+                    assert state instanceof FileFractum;
+                    namespaceCount = 1; }
+                else {
+                    if( /*old*/state instanceof FileFractum ) namespaceCount/*at next state*/ = 0;
                     try { state = source.next(); } catch( final ParseError x ) { throw halt( x ); }}
-                assert !state.isFinal() || state instanceof FileFractum.End;
                 switch( state.symmetry() ) {
                     case asymmetric -> throw new IllegalStateException(); /* A state of `halt`
                       or `empty`, neither of which could have come from the `source.next` above. */
@@ -305,8 +320,11 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                         translationProcess = head_encapsulation;
                         eventTypeNext = START_ELEMENT; }
                     case fractalEnd -> {
-                        eventType = END_ELEMENT; /* If the parse state here is `FileFractum.End`,
-                          then this ends the document element and the next call will end the document. */
+                        eventType = END_ELEMENT;
+                        if( state.isFinal() ) {
+                            assert state instanceof FileFractum.End; /* End of document element.
+                              The next call will end the document. */
+                            namespaceCount = 1; }
                         location = locationUnknown; }}}
             case head_encapsulation -> { /* Encapsulating a fractal head.  This process emits either:
                   a) an opening `Head` tag, then switches to `head_content_traversal'; or
@@ -418,7 +436,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-    public @Override void require( int type, String namespaceURI, String localName ) {
+    public @Override void require( int type, String namespace, String localName ) {
         throw new UnsupportedOperationException(); }
 
 
@@ -458,6 +476,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
     private void halt() {
         eventType = HALT;
+        namespaceCount = 0;
         location = locationUnknown;
         hasNext = false; }
 
@@ -500,6 +519,14 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     private Markup markup;
+
+
+
+    private static final String namespace = "data:,Breccia/XML";
+
+
+
+    private int namespaceCount;
 
 
 
