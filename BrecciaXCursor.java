@@ -4,8 +4,7 @@ import Breccia.parser.*;
 import Java.IntArrayExtensor;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.stream.*;
@@ -153,8 +152,8 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     public @Override String getLocalName() {
-        if( eventType == END_ELEMENT ) throw unsupportedForEndElement( "getLocalName" );
-        if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
+        if( eventType != START_ELEMENT && eventType != END_ELEMENT ) throw wrongEventType();
+          // As per contract.
         return localName; }
 
 
@@ -164,8 +163,8 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     public @Override QName getName() {
-        if( eventType == END_ELEMENT ) throw unsupportedForEndElement( "getName" );
-        if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
+        if( eventType != START_ELEMENT && eventType != END_ELEMENT ) throw wrongEventType();
+          // As per contract.
         return new QName( namespace, localName ); }
 
 
@@ -303,7 +302,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                     case fractalStart -> {
                         eventType = START_ELEMENT;
                         final Fractum fractum = source.asFractum();
-                        localName = fractum.tagName();
+                        localNameStack.push( localName = fractum.tagName() );
                         markup = fractum;
                         location = locationFromMarkup;
 
@@ -325,6 +324,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                         eventTypeNext = START_ELEMENT; }
                     case fractalEnd -> {
                         eventType = END_ELEMENT;
+                        localName = localNameStack.pop();
                         if( state.isFinal() ) {
                             assert state instanceof FileFractum.End; /* End of document element.
                               The next call will end the document. */
@@ -335,7 +335,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                   b) a closing `Head` tag, then switches back to `interstate_traversal`. */
                 eventType = eventTypeNext;
                 if( eventType == START_ELEMENT ) {
-                    localName = "Head";
+                    localNameStack.push( localName = "Head" );
                     assert markup instanceof Fractum && location == locationFromMarkup;
 
                   // clean up, preparing for the next event
@@ -345,6 +345,8 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                     else assert eventTypeNext == START_ELEMENT; }
                 else {
                     assert eventType == END_ELEMENT;
+                    localName = localNameStack.pop();
+                    assert "Head".equals( localName );
                     location = locationUnknown;
 
                   // clean up, preparing for the next event
@@ -357,7 +359,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                 eventType = eventTypeNext;
                 if( eventType == START_ELEMENT ) {
                     final Markup component = components.get( componentIndex );
-                    localName = component.tagName();
+                    localNameStack.push( localName = component.tagName() );
                     markup = component;
                     location = locationFromMarkup;
 
@@ -384,6 +386,7 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
                         translationProcess = /*back to*/head_encapsulation; }} // To end it.
                 else {
                     assert eventType == END_ELEMENT;
+                    localName = localNameStack.pop();
                     location = locationUnknown;
 
                   // clean up, preparing for the next event
@@ -500,6 +503,10 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
+    private final ArrayDeque<String> localNameStack = new ArrayDeque<>( 0x100 );
+
+
+
     private Location location;
 
 
@@ -546,12 +553,6 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
     private TranslationProcess translationProcess;
-
-
-
-    private static UnsupportedOperationException unsupportedForEndElement( final String methodName ) {
-        return new UnsupportedOperationException( "Method `" + methodName
-          + "` for `END_ELEMENT` is presently unsupported." ); }
 
 
 
