@@ -22,7 +22,7 @@ import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
   * For the XML event types actually emitted by this translator (at present), see the `assert` statement
   * and comment at the foot of method `next`.
   */
-public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
+public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XMLStreamReader {
 
 
     public BrecciaXCursor() { halt(); }
@@ -88,11 +88,14 @@ public final class BrecciaXCursor implements XStreamConstants, XMLStreamReader {
 
 
 
-   // ━━━  X M L   S t r e a m   R e a d e r  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   // ━━━  A u t o   C l o s e a b l e  ━━━  X M L   S t r e a m   R e a d e r  ━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
     public @Override void close() {}
 
+
+
+   // ━━━  X M L   S t r e a m   R e a d e r  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
     public @Override int getAttributeCount() {
