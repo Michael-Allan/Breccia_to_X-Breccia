@@ -318,8 +318,9 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                             if( fractum.text().isEmpty() ) {            // a) The fractum is headless;
                                 assert fractum instanceof FileFractum; //    it must be a file fractum.
                                 break; } // Continuing with `interstate_traversal`.
-                            this.components = null; }                // b) The fractal head is flat.
-                        else {                                      // c) The fractal head is composite.
+                            this.components = null;                  // b) The fractal head is flat.
+                            assert false: "Dead code"; } // [FH]
+                        else {                                     // c) The fractal head is composite.
                             this.components = components;
                             this.componentIndex = 0;
                             assert componentsStack.isEmpty() && componentIndexStack.isEmpty(); }
@@ -344,7 +345,9 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
                     translationProcess = head_content_traversal;
-                    if( components == null ) eventTypeNext = CHARACTERS;
+                    if( components == null ) {
+                        eventTypeNext = CHARACTERS;
+                        assert false: "Dead code"; } // [FH]
                     else assert eventTypeNext == START_ELEMENT; }
                 else {
                     assert eventType == END_ELEMENT;
@@ -558,6 +561,15 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
     private static IllegalStateException wrongEventType() {
         return new IllegalStateException( "Wrong type of parse event" ); }}
+
+
+
+// NOTES
+// ─────
+//   FH · Flat head: marking an instance of code that deals with flat, non-composite fractal heads.
+//        At the time of writing, no flat head actually occurs in any `Fractum` implementation.
+//        Rather all head content is composite, being modelled by one or more `Markup` components.
+//        Therefore the marked code is dead and untested.
 
 
 
