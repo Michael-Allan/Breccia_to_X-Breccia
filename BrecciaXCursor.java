@@ -17,7 +17,9 @@ import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
 /** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor
   * over a series of discrete parse states.  This translator suffices (as is) to support any extension
   * of Breccia that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
-  * and extended file-fractal states (if any) as instances of `FileFractum` and `FileFractum.End`. *//*
+  * and extended file-fractal states (if any) as instances of `FileFractum` and `FileFractum.End`.
+  *
+  * <p>This translator produces X-Breccia with no ignorable whitespace, such as between elements.</p>*//*
   *
   * For the XML event types actually emitted by this translator (at present), see the `assert` statement
   * and comment at the foot of method `next`.
