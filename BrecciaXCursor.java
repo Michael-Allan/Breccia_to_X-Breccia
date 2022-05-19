@@ -12,6 +12,7 @@ import javax.xml.stream.*;
 import static Breccia.parser.ParseState.Symmetry.*;
 import static Breccia.parser.Typestamp.*;
 import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
+import static Java.StringBuilding.clear;
 
 
 /** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor
@@ -27,7 +28,12 @@ import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
 public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XMLStreamReader {
 
 
-    public BrecciaXCursor() { halt(); }
+    public BrecciaXCursor() {
+        final Attribute[] attributesFractalHead = { xunc, xuncLineEnds };
+        final Attribute[] attributesOther = { xunc };
+        this.attributesFractalHead = attributesFractalHead;
+        this.attributesOther = attributesOther;
+        halt(); }
 
 
 
@@ -101,13 +107,12 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     public @Override int getAttributeCount() {
-     // if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
-        return 0; }
+        if( eventType != START_ELEMENT ) throw wrongEventType(); // As per contract.
+        return attributes.length; }
 
 
 
-    public @Override String getAttributeLocalName( int index ) {
-        throw new UnsupportedOperationException(); }
+    public @Override String getAttributeLocalName( final int a ) { return attributes[a].localName; }
 
 
 
@@ -115,21 +120,19 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    public @Override String getAttributePrefix( int index ) {
-        throw new UnsupportedOperationException(); }
+    public @Override String getAttributePrefix( final int a ) { return attributes[a].prefix; }
 
 
 
-    public @Override String getAttributeNamespace( int index ) {
-        throw new UnsupportedOperationException(); }
+    public @Override String getAttributeNamespace( final int a ) { return attributes[a].namespace; }
 
 
 
-    public @Override String getAttributeType( int index ) { throw new UnsupportedOperationException(); }
+    public @Override String getAttributeType( final int a ) { return attributes[a].type; }
 
 
 
-    public @Override String getAttributeValue( int index ) { throw new UnsupportedOperationException(); }
+    public @Override String getAttributeValue( final int a ) { return attributes[a].value(); }
 
 
 
@@ -310,6 +313,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                         localNameStack.push( localName = fractum.tagName() );
                         markup = fractum;
                         location = locationFromMarkup;
+                        attributes = attributesFractum;
 
                       // clean up, preparing for subsequent events
                       // ┈┈┈┈┈┈┈┈
@@ -343,6 +347,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                 if( eventType == START_ELEMENT ) {
                     localNameStack.push( localName = "Head" );
                     assert markup instanceof Fractum && location == locationFromMarkup;
+                    attributes = attributesFractalHead;
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
@@ -370,6 +375,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                     localNameStack.push( localName = component.tagName() );
                     markup = component;
                     location = locationFromMarkup;
+                    attributes = attributesOther;
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
@@ -418,8 +424,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    public @Override boolean isAttributeSpecified( int index ) {
-        throw new UnsupportedOperationException(); }
+    public @Override boolean isAttributeSpecified( final int a ) { return attributes[a].isSpecified; }
 
 
 
@@ -458,6 +463,22 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 ////  P r i v a t e  ////////////////////////////////////////////////////////////////////////////////////
+
+
+    private Attribute[] attributes;
+
+
+
+    private final Attribute[] attributesFractum = {};
+
+
+
+    private final Attribute[] attributesFractalHead;
+
+
+
+    private final Attribute[] attributesOther;
+
 
 
     /** Index of a component within {@linkplain #components components}.
@@ -550,6 +571,10 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
+    private final StringBuilder stringBuilder = new StringBuilder( /*initial capacity*/0x300/*or 768*/ );
+
+
+
     static enum TranslationProcess { // Access is non-private only to allow a static `import` at top.
         interstate_traversal,
         head_encapsulation,
@@ -562,7 +587,61 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     private static IllegalStateException wrongEventType() {
-        return new IllegalStateException( "Wrong type of parse event" ); }}
+        return new IllegalStateException( "Wrong type of parse event" ); }
+
+
+
+    private final Attribute xunc = new Attribute( "xunc" ) {
+        @Override String value() { return Integer.toString( markup.xunc() ); }};
+
+
+
+    private final Attribute xuncLineEnds = new Attribute( "xuncLineEnds" ) {
+        @Override String value() {
+            final Fractum fractum = source.asFractum();
+            final int iN = fractum.lineCount();
+            if( iN <= 0 ) throw new IllegalStateException();
+            final StringBuilder b = clear( stringBuilder );
+            for( int i = 0;; ) {
+                b.append( fractum.xuncLineEnd( i ));
+                if( ++i == iN ) break;
+                b.append( ' ' ); } // Separator.
+            return b.toString(); }};
+
+
+
+   // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+
+    private static abstract class Attribute {
+
+
+        Attribute( String localName ) { this.localName = localName; }
+
+
+
+        final boolean isSpecified = false;
+
+
+
+        final String localName;
+
+
+
+        final String namespace = null;
+
+
+
+        final String prefix = null;
+
+
+
+        final String type = "CDATA"; /* Presumeably correct for the present (non-validating) parser.
+          https://developer.android.com/reference/org/xmlpull/v1/XmlPullParser#getAttributeType(int) */
+
+
+
+        abstract String value(); }}
 
 
 
