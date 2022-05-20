@@ -29,7 +29,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     public BrecciaXCursor() {
-        final Attribute[] attributesFractalHead = { xunc, xuncLineEnds };
+        final Attribute[] attributesFractalHead = { lineNumber, xunc, xuncLineEnds }; // [LN]
         final Attribute[] attributesOther = { xunc };
         this.attributesFractalHead = attributesFractalHead;
         this.attributesOther = attributesOther;
@@ -525,6 +525,11 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
+    private final Attribute lineNumber = new Attribute( "lineNumber" ) {
+        @Override String value() { return Integer.toString( markup.lineNumber() ); }};
+
+
+
     private String localName;
 
 
@@ -651,6 +656,10 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 //        At the time of writing, no flat head actually occurs in any `Fractum` implementation.
 //        Rather all head content is composite, being modelled by one or more `Markup` components.
 //        Therefore the marked code is dead and untested.
+//
+//   LN · Line number attribution on the fractal head.  While the parser considers line numbers to be
+//        ‘adjunct state’, requests for which ‘may be slow’, here they are much wanted (in tandem with
+//        `xunc` and `xuncLineEnds`) to anchor the resolution of line numbers more generally.
 
 
 
