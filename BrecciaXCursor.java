@@ -15,23 +15,46 @@ import static Breccia.XML.translator.BrecciaXCursor.TranslationProcess.*;
 import static Java.StringBuilding.clear;
 
 
-/** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor
-  * over a series of discrete parse states.  This translator suffices (as is) to support any extension
-  * of Breccia that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
-  * and extended file-fractal states (if any) as instances of `FileFractum` and `FileFractum.End`.
+/** A reusable, pull translator of Breccia to X-Breccia that operates as a unidirectional cursor over
+  * a series of discrete parse states.  This translator suffices (as is) to support any extension of
+  * Breccia Parser that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
+  * and file-fractal states, if any, as instances of `FileFractum` and `FileFractum.End`.
   *
-  * <p>This translator produces X-Breccia with no ignorable whitespace, such as between elements.</p>*//*
+  * <p>This translator emits no ignorable whitespace.</p>
   *
-  * For the XML event types actually emitted by this translator (at present), see the `assert` statement
-  * and comment at the foot of method `next`.
+  * <p>This translator emits nothing for an empty markup source.  Otherwise it emits one element
+  * named `{@linkplain Breccia.parser.Markup#tagName() tagName}` for each instance of parsed markup.
+  * Further it emits one element named `Head` for the content of each fractal head.
+  * The namespace for all elements is `{@value #namespace}`.</p>
+  *
+  * <p>Attributes occur within fractal heads alone.
+  * The following occur on the `Head` element itself.</p><ul>
+  *
+  *     <li>`{@linkplain Breccia.parser.Markup#lineNumber() lineNumber}`</li>
+  *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li>
+  *     <li>`xuncLineEnds`, the value being a space delimited list of each
+  *         `{@linkplain Breccia.parser.Markup#xuncLineEnd() xuncLineEnd}`</li></ul>
+  *
+  * <p>Further each descendant of the `Head` element is given one attribute:</p><ul>
+  *
+  *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li></ul>
+  *
+  *     @see <a href='http://reluk.ca/project/Breccia/'>Breccia Parser</a>
+  *     @see Breccia.parser.Fractum
+  *     @see Breccia.parser.Fractum.End
+  *     @see Breccia.parser.FileFractum
+  *     @see Breccia.parser.FileFractum.End *//*
+  *
+  * For the XML event types emitted by this translator (at present),
+  * see the `assert` statement and comment at the foot of method `next`.
   */
 public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XMLStreamReader {
 
 
     public BrecciaXCursor() {
-        final Attribute[] attributesFractalHead = { lineNumber, xunc, xuncLineEnds }; // [LN]
+        final Attribute[] attributesHead = { lineNumber, xunc, xuncLineEnds }; // [LN]
         final Attribute[] attributesOther = { xunc };
-        this.attributesFractalHead = attributesFractalHead;
+        this.attributesHead = attributesHead;
         this.attributesOther = attributesOther;
         halt(); }
 
@@ -347,7 +370,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                 if( eventType == START_ELEMENT ) {
                     localNameStack.push( localName = "Head" );
                     assert markup instanceof Fractum && location == locationFromMarkup;
-                    attributes = attributesFractalHead;
+                    attributes = attributesHead;
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
@@ -473,7 +496,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    private final Attribute[] attributesFractalHead;
+    private final Attribute[] attributesHead;
 
 
 
