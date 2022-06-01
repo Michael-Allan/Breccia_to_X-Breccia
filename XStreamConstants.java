@@ -19,7 +19,7 @@ public interface XStreamConstants {
 
 
     /** The translation has halted abnormally.  This is a final state, rendering the translator unusable
-      * for the present markup source.  It results from any occurence of a parse error
+      * for the present markup source.  It results from any occurrence of a parse error
       * in the markup source, or detection there of an invalid state.
       *
       *     @see ParseError
