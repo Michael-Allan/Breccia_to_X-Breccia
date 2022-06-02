@@ -27,15 +27,18 @@ import static Java.StringBuilding.clear;
   * Further it emits one element named `Head` for the content of each fractal head.
   * The namespace for all elements is `{@value #namespace}`.</p>
   *
-  * <p>Attributes occur within fractal heads alone.
-  * The following occur on the `Head` element itself.</p><ul>
+  * <p>Each fractum element is given the following attribute.</p><ul>
+  *
+  *     <li>`{@linkplain Breccia.parser.ParseState#typestamp() typestamp}`</li></ul>
+  *
+  * <p>Its `Head` element is given these:</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.Markup#lineNumber() lineNumber}`</li>
   *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li>
   *     <li>`xuncLineEnds`, the value being a space delimited list of each
   *         `{@linkplain Breccia.parser.Markup#xuncLineEnd() xuncLineEnd}`</li></ul>
   *
-  * <p>Further each descendant of the `Head` element is given one attribute:</p><ul>
+  * <p>Further each descendant of the `Head` element is given:</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li></ul>
   *
@@ -52,8 +55,10 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     public BrecciaXCursor() {
+        final Attribute[] attributesFractum = { typestamp };
         final Attribute[] attributesHead = { lineNumber, xunc, xuncLineEnds }; // [LN]
         final Attribute[] attributesOther = { xunc };
+        this.attributesFractum = attributesFractum;
         this.attributesHead = attributesHead;
         this.attributesOther = attributesOther;
         halt(); }
@@ -492,7 +497,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    private final Attribute[] attributesFractum = {};
+    private final Attribute[] attributesFractum;
 
 
 
@@ -611,6 +616,11 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     private TranslationProcess translationProcess;
+
+
+
+    private final Attribute typestamp = new Attribute( "typestamp" ) {
+        @Override String value() { return Integer.toString( source.state().typestamp() ); }};
 
 
 
