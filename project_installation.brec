@@ -1,4 +1,4 @@
-Installation instructions for Breccia X-Breccia Translator
+Installation instructions for project Breccia to X-Breccia
 
     initial set-up
         1+ Ensure the following projects are installed.
@@ -12,7 +12,7 @@ Installation instructions for Breccia X-Breccia Translator
                   proper paths.  The present project, for example, will shortly be accessible
                   at `Breccia/XML/translator`.
                     : see `^^command directory$` @ http://reluk.ca/project/lexicon.brec
-            >+ git clone http://reluk.ca/var/repo/git/Breccia_X-Breccia_Translator.git Breccia/XML/translator
+            >+ git clone http://reluk.ca/var/repo/git/Breccia_to_X-Breccia.git Breccia/XML/translator
         + Build the software.
             : see http://reluk.ca/project/building/Makeshift/bin/build.brec
             >+ build Breccia/XML/translator class-files
