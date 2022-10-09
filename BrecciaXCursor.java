@@ -20,18 +20,19 @@ import static Java.StringBuilding.clear;
   * Breccia Parser that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
   * and file-fractal states, if any, as instances of `FileFractum` and `FileFractum.End`.
   *
-  * <p>This translator emits no ignorable whitespace.</p>
+  * <p>The {@linkplain #markupSource(Cursor) initial translation state} is either
+  * `{@linkplain #EMPTY EMPTY}` or `{@linkplain #START_DOCUMENT START_DOCUMENT}`.
+  * If the initial translation state is `EMPTY`, then this translator emits no elements.
+  * Otherwise, for each instance `m` of parsed markup, this translator emits an element
+  * named `m.{@linkplain Breccia.parser.Markup#tagName() tagName}`.  Further it emits
+  * an element named `Head` to encapsulate the content of each fractal head.
+  * The namespace for all emitted elements is `{@value #namespace}`.</p>
   *
-  * <p>This translator emits nothing for an empty markup source.  Otherwise it emits one element
-  * named `{@linkplain Breccia.parser.Markup#tagName() tagName}` for each instance of parsed markup.
-  * Further it emits one element named `Head` for the content of each fractal head.
-  * The namespace for all elements is `{@value #namespace}`.</p>
-  *
-  * <p>Each fractum element is given the following attribute.</p><ul>
+  * <p>The element for each fractum is given the following attribute.</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.ParseState#typestamp() typestamp}`</li></ul>
   *
-  * <p>Its `Head` element is given these:</p><ul>
+  * <p>Its `Head` element is given these attributes:</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.Markup#lineNumber() lineNumber}`</li>
   *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li>
@@ -41,6 +42,8 @@ import static Java.StringBuilding.clear;
   * <p>Further each descendant of the `Head` element is given:</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li></ul>
+  *
+  * <p>This translator emits no ignorable whitespace.</p>
   *
   *     @see <a href='http://reluk.ca/project/Breccia/'>Breccia Parser</a>
   *     @see Breccia.parser.Fractum
