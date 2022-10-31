@@ -20,12 +20,11 @@ import static Java.StringBuilding.clear;
   * Breccia Parser that models its extended fractal states as instances of `Fractum` and `Fractum.End`,
   * and file-fractal states, if any, as instances of `FileFractum` and `FileFractum.End`.
   *
-  * <p>The {@linkplain #markupSource(Cursor) initial translation state} is either
+  * <p>The {@linkplain #source(Cursor) initial translation state} is either
   * `{@linkplain #EMPTY EMPTY}` or `{@linkplain #START_DOCUMENT START_DOCUMENT}`.
-  * If the initial translation state is `EMPTY`, then this translator emits no elements.
-  * Otherwise, for each instance `m` of parsed markup, this translator emits an element
-  * named `m.{@linkplain Breccia.parser.Markup#tagName() tagName}`.  Further it emits
-  * an element named `Head` to encapsulate the content of each fractal head.
+  * If `EMPTY`, then this translator emits no elements.  Otherwise, for each granum `g`,
+  * this translator emits an element named `g.{@linkplain Breccia.parser.Granum#tagName() tagName}`.
+  * Further it emits an element named `Head` to encapsulate the content of each fractal head.
   * The namespace for all emitted elements is `{@value #namespace}`.</p>
   *
   * <p>The element for each fractum is given the following attribute.</p><ul>
@@ -34,14 +33,14 @@ import static Java.StringBuilding.clear;
   *
   * <p>Its `Head` element is given these attributes:</p><ul>
   *
-  *     <li>`{@linkplain Breccia.parser.Markup#lineNumber() lineNumber}`</li>
-  *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li>
+  *     <li>`{@linkplain Breccia.parser.Granum#lineNumber() lineNumber}`</li>
+  *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li>
   *     <li>`xuncLineEnds`, the value being a space delimited list of each
-  *         `{@linkplain Breccia.parser.Markup#xuncLineEnd() xuncLineEnd}`</li></ul>
+  *         `{@linkplain Breccia.parser.Granum#xuncLineEnd() xuncLineEnd}`</li></ul>
   *
   * <p>Further each descendant of the `Head` element is given:</p><ul>
   *
-  *     <li>`{@linkplain Breccia.parser.Markup#xunc() xunc}`</li></ul>
+  *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li></ul>
   *
   * <p>This translator emits no ignorable whitespace.</p>
   *
@@ -68,18 +67,49 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    /** Begins translating a new source of markup comprising a single file fractum.  Sets the translation
+    /** Translates the text of the given source, feeding each state of the translation to `sink`
+      * till all are exhausted.  Calling this method will abort any translation already in progress.
+      *
+      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
+      *       is not {@linkplain ParseState#isInitial() initial}.
+      */
+    public void perState( final Cursor source, final IntConsumer sink ) throws ParseError {
+        source( source );
+        for( ;; ) {
+            sink.accept( eventType );
+            if( !hasNext() ) break;
+            try { next(); }
+            catch( final XMLStreamException x ) { throw (ParseError)(x.getCause()); }}}
+
+
+
+    /** Translates the text of the given source, feeding each state of the translation to `sink`
+      * till either all are exhausted or `sink` returns false.  Calling this method will abort
+      * any translation already in progress.
+      *
+      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
+      *       is not {@linkplain ParseState#isInitial() initial}.
+      */
+    public void perStateConditionally( final Cursor source, final IntPredicate sink ) throws ParseError {
+        source( source );
+        while( sink.test(eventType) && hasNext() ) {
+            try { next(); }
+            catch( final XMLStreamException x ) { throw (ParseError)(x.getCause()); }}}
+
+
+
+    /** Begins translating a new source of text comprising a single file fractum.  Sets the translation
       * state either to `{@linkplain #EMPTY EMPTY}` or to `{@linkplain #START_DOCUMENT START_DOCUMENT}`.
       *
       *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
       *       is not an {@linkplain ParseState#isInitial() initial state}.
       */
-    public void markupSource( final Cursor source ) {
+    public void source( final Cursor source ) {
         this.source = source;
         final ParseState initialParseState = source.state();
         if( !initialParseState.isInitial() ) {
             halt();
-            throw new IllegalStateException( "Markup source in non-initial state" ); }
+            throw new IllegalStateException( "Source in non-initial state" ); }
         namespaceCount = 0;
         if( initialParseState.isFinal() ) {
             assert initialParseState.typestamp() == empty;
@@ -93,37 +123,6 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
             assert initialParseState instanceof FileFractum;
             translationProcess = interstate_traversal;
             hasNext = true; }}
-
-
-
-    /** Translates the markup of the given source, feeding each state of the translation to `sink`
-      * till all are exhausted.  Calling this method will abort any translation already in progress.
-      *
-      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
-      *       is not {@linkplain ParseState#isInitial() initial}.
-      */
-    public void perState( final Cursor source, final IntConsumer sink ) throws ParseError {
-        markupSource( source );
-        for( ;; ) {
-            sink.accept( eventType );
-            if( !hasNext() ) break;
-            try { next(); }
-            catch( final XMLStreamException x ) { throw (ParseError)(x.getCause()); }}}
-
-
-
-    /** Translates the markup of the given source, feeding each state of the translation to `sink`
-      * till either all are exhausted or `sink` returns false.  Calling this method will abort
-      * any translation already in progress.
-      *
-      *     @throws IllegalStateException If `source.{@linkplain Cursor#state() state}`
-      *       is not {@linkplain ParseState#isInitial() initial}.
-      */
-    public void perStateConditionally( final Cursor source, final IntPredicate sink ) throws ParseError {
-        markupSource( source );
-        while( sink.test(eventType) && hasNext() ) {
-            try { next(); }
-            catch( final XMLStreamException x ) { throw (ParseError)(x.getCause()); }}}
 
 
 
@@ -272,7 +271,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
           final int targetStart, int length ) {
         if( eventType != CHARACTERS ) throw wrongEventType();
         if( sourceStart < 0 ) throw new IndexOutOfBoundsException( sourceStart );
-        final CharSequence characters = markup.text();
+        final CharSequence characters = granum.text();
         final int lengthAvailable = characters.length() - sourceStart;
         if( length > lengthAvailable ) length = lengthAvailable;
         final int tEnd = targetStart + length;
@@ -287,7 +286,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
     public @Override int getTextLength() {
         if( eventType != CHARACTERS ) throw wrongEventType();
-        return markup.text().length(); }
+        return granum.text().length(); }
 
 
 
@@ -342,13 +341,13 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                         eventType = START_ELEMENT;
                         final Fractum fractum = source.asFractum();
                         localNameStack.push( localName = fractum.tagName() );
-                        markup = fractum;
-                        location = locationFromMarkup;
+                        granum = fractum;
+                        location = locationFromGranum;
                         attributes = attributesFractum;
 
                       // clean up, preparing for subsequent events
                       // ┈┈┈┈┈┈┈┈
-                        final List<? extends Markup> components;
+                        final List<? extends Granum> components;
                         try { components = fractum.components(); }
                         catch( final ParseError x ) { throw halt( x ); }
                         if( components.isEmpty() ) {
@@ -377,7 +376,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                 eventType = eventTypeNext;
                 if( eventType == START_ELEMENT ) {
                     localNameStack.push( localName = "Head" );
-                    assert markup instanceof Fractum && location == locationFromMarkup;
+                    assert granum instanceof Fractum && location == locationFromGranum;
                     attributes = attributesHead;
 
                   // clean up, preparing for the next event
@@ -396,21 +395,21 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
                     translationProcess = /*back to*/interstate_traversal; }}
-            case head_content_traversal -> { /* Traversing the markup content of a fractal head.
-                  This process traverses in depth the content of the head, emitting XML events
-                  to reflect in turn each instance of a component, subcomponent or flat markup,
+            case head_content_traversal -> { /* Traversing the content of a fractal head.
+                  This process traverses the content in depth, emitting XML events
+                  to reflect in turn each instance of a component, subcomponent or flat text,
                   then switches the process back to one of `head_encapsulation`. */
                 eventType = eventTypeNext;
                 if( eventType == START_ELEMENT ) {
-                    final Markup component = components.get( componentIndex );
+                    final Granum component = components.get( componentIndex );
                     localNameStack.push( localName = component.tagName() );
-                    markup = component;
-                    location = locationFromMarkup;
+                    granum = component;
+                    location = locationFromGranum;
                     attributes = attributesOther;
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
-                    final List<? extends Markup> subcomponents;
+                    final List<? extends Granum> subcomponents;
                     try { subcomponents = component.components(); }
                     catch( final ParseError x ) { throw halt( x ); }
                     if( subcomponents.size() > 0 ) { // Then descend the component hierarchy.
@@ -419,15 +418,15 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                         componentIndexStack.add( componentIndex );
                         componentIndex = 0;
                         assert eventTypeNext == START_ELEMENT; }
-                    else eventTypeNext = CHARACTERS; } // No next subcomponent, only flat markup.
+                    else eventTypeNext = CHARACTERS; } // No next subcomponent, only flat text.
                 else if( eventType == CHARACTERS ) {
-                    assert location == locationFromMarkup;
+                    assert location == locationFromGranum;
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
                     eventTypeNext = END_ELEMENT; // This ends either the present component,
                     if( components == null ) {  // or (with the code herein) the fractal head.
-                        assert markup instanceof Fractum;
+                        assert granum instanceof Fractum;
                         translationProcess = /*back to*/head_encapsulation; }} // To end it.
                 else {
                     assert eventType == END_ELEMENT;
@@ -522,11 +521,11 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    private List<? extends Markup> components;
+    private List<? extends Granum> components;
 
 
 
-    private final ArrayList<List<? extends Markup>> componentsStack = new ArrayList<>( 0x100 );
+    private final ArrayList<List<? extends Granum>> componentsStack = new ArrayList<>( 0x100 );
 
 
 
@@ -535,6 +534,10 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     private int eventTypeNext; // Used only for `translationProcess` ≠ `interstate_traversal`.
+
+
+
+    private Granum granum;
 
 
 
@@ -557,7 +560,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     private final Attribute lineNumber = new Attribute( "lineNumber" ) {
-        @Override String value() { return Integer.toString( markup.lineNumber() ); }};
+        @Override String value() { return Integer.toString( granum.lineNumber() ); }};
 
 
 
@@ -573,10 +576,10 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    private final Location locationFromMarkup = new Location() {
+    private final Location locationFromGranum = new Location() {
         public @Override int getCharacterOffset() { return -1; }
-        public @Override int getColumnNumber()    { return markup.column(); }
-        public @Override int getLineNumber()      { return markup.lineNumber(); }
+        public @Override int getColumnNumber()    { return granum.column(); }
+        public @Override int getLineNumber()      { return granum.lineNumber(); }
         public @Override String getPublicId()     { return null; }
         public @Override String getSystemId()     { return null; }};
 
@@ -588,10 +591,6 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
         public @Override int getLineNumber()      { return -1; }
         public @Override String getPublicId()     { return null; }
         public @Override String getSystemId()     { return null; }};
-
-
-
-    private Markup markup;
 
 
 
@@ -633,7 +632,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     private final Attribute xunc = new Attribute( "xunc" ) {
-        @Override String value() { return Integer.toString( markup.xunc() ); }};
+        @Override String value() { return Integer.toString( granum.xunc() ); }};
 
 
 
@@ -690,7 +689,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 // ─────
 //   FH · Flat head: marking an instance of code that deals with flat, non-composite fractal heads.
 //        At the time of writing, no flat head actually occurs in any `Fractum` implementation.
-//        Rather all head content is composite, being modelled by one or more `Markup` components.
+//        Rather all head content is composite, being modelled by one or more `Granum` components.
 //        Therefore the marked code is dead and untested.
 //
 //   LN · Line number attribution on the fractal head.  While the parser considers line numbers to be

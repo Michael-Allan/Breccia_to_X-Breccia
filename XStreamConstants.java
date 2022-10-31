@@ -9,7 +9,7 @@ package Breccia.XML.translator;
 public interface XStreamConstants {
 
 
-    /** Nothing, no markup to translate.  Occurs on attempting to translate an empty source of markup.
+    /** Nothing, no text to translate.  Occurs on attempting to translate an empty source of text.
       * This is both an initial and final state.
       *
       *     @see Breccia.parser.Empty
@@ -19,8 +19,8 @@ public interface XStreamConstants {
 
 
     /** The translation has halted abnormally.  This is a final state, rendering the translator unusable
-      * for the present markup source.  It results from any occurrence of a parse error
-      * in the markup source, or detection there of an invalid state.
+      * for the present text source.  It results from any occurrence of a parse error
+      * in the text source, or detection there of an invalid state.
       *
       *     @see ParseError
       *     @see Breccia.parser.Halt
