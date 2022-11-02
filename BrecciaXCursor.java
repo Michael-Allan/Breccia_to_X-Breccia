@@ -27,18 +27,19 @@ import static Java.StringBuilding.clear;
   * Further it emits an element named `Head` to encapsulate the content of each fractal head.
   * The namespace for all emitted elements is `{@value #namespace}`.</p>
   *
-  * <p>The element for each fractum is given the following attribute.</p><ul>
+  * <p>The element for each fractum is given the following attributes.</p><ul>
   *
-  *     <li>`{@linkplain Breccia.parser.ParseState#typestamp() typestamp}`</li></ul>
+  *     <li>`{@linkplain Breccia.parser.Granum#lineNumber() lineNumber}`</li>
+  *     <li>`{@linkplain Breccia.parser.ParseState#typestamp() typestamp}`</li>
+  *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li></ul>
   *
   * <p>Its `Head` element is given these attributes:</p><ul>
   *
-  *     <li>`{@linkplain Breccia.parser.Granum#lineNumber() lineNumber}`</li>
   *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li>
   *     <li>`xuncLineEnds`, the value being a space delimited list of each
   *         `{@linkplain Breccia.parser.Granum#xuncLineEnd() xuncLineEnd}`</li></ul>
   *
-  * <p>Further each descendant of the `Head` element is given:</p><ul>
+  * <p>The other granal elements (descendants all of the `Head` element) are given:</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li></ul>
   *
@@ -57,8 +58,9 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     public BrecciaXCursor() {
-        final Attribute[] attributesFractum = { typestamp };
-        final Attribute[] attributesHead = { lineNumber, xunc, xuncLineEnds }; // [LN]
+        final Attribute[] attributesFractum = { lineNumber, typestamp, xunc }; // [LN]
+        final Attribute[] attributesHead = { xunc, xuncLineEnds }; /* Each proper to the fractal head
+          (as opposed to the whole fractum), or to all grana. */
         final Attribute[] attributesOther = { xunc };
         this.attributesFractum = attributesFractum;
         this.attributesHead = attributesHead;
@@ -499,14 +501,20 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
+    /** The attributes of fracta.
+      */
     private final Attribute[] attributesFractum;
 
 
 
+    /** The attributes of fractal heads.
+      */
     private final Attribute[] attributesHead;
 
 
 
+    /** The attributes of grana other than fracta and fractal heads.
+      */
     private final Attribute[] attributesOther;
 
 
@@ -692,7 +700,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 //        Rather all head content is composite, being modelled by one or more `Granum` components.
 //        Therefore the marked code is dead and untested.
 //
-//   LN · Line number attribution on the fractal head.  While the parser considers line numbers to be
+//   LN · Line number attribution on the fractal element.  While the parser considers line numbers to be
 //        ‘adjunct state’, requests for which ‘may be slow’, here they are much wanted (in tandem with
 //        `xunc` and `xuncLineEnds`) to anchor the resolution of line numbers more generally.
 
