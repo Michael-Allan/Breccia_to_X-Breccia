@@ -43,6 +43,10 @@ import static Java.StringBuilding.clear;
   *
   *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li></ul>
   *
+  * <p>Moreover each of the following attributes is given to any fractum to which it is proper.</p><ul>
+  *
+  *     <li>`{@linkplain Breccia.parser.CommandPoint#modifiers() modifiers}`</li></ul>
+  *
   * <p>This translator emits no ignorable whitespace.</p>
   *
   *     @see <a href='http://reluk.ca/project/Breccia/'>Breccia Parser</a>
@@ -57,15 +61,7 @@ import static Java.StringBuilding.clear;
 public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XMLStreamReader {
 
 
-    public BrecciaXCursor() {
-        final Attribute[] attributesFractum = { lineNumber, typestamp, xunc }; // [LN]
-        final Attribute[] attributesHead = { xunc, xuncLineEnds }; /* Each proper to the fractal head
-          (as opposed to the whole fractum), or to all grana. */
-        final Attribute[] attributesOther = { xunc };
-        this.attributesFractum = attributesFractum;
-        this.attributesHead = attributesHead;
-        this.attributesOther = attributesOther;
-        halt(); }
+    public BrecciaXCursor() { halt(); }
 
 
 
@@ -345,7 +341,8 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                         localNameStack.push( localName = fractum.tagName() );
                         granum = fractum;
                         location = locationFromGranum;
-                        attributes = attributesFractum;
+                        if( source.asCommandPoint() != null ) attributes = attributesCommandPoint;
+                        else attributes = attributesFractum;
 
                       // clean up, preparing for subsequent events
                       // ┈┈┈┈┈┈┈┈
@@ -501,24 +498,6 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    /** The attributes of fracta.
-      */
-    private final Attribute[] attributesFractum;
-
-
-
-    /** The attributes of fractal heads.
-      */
-    private final Attribute[] attributesHead;
-
-
-
-    /** The attributes of grana other than fracta and fractal heads.
-      */
-    private final Attribute[] attributesOther;
-
-
-
     /** Index of a component within {@linkplain #components components}.
       */
     private int componentIndex;
@@ -602,6 +581,20 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
+    private final Attribute modifiers = new Attribute( "modifiers" ) {
+        @Override String value() {
+            final List<String> modifiers = source.asCommandPoint().modifiers();
+            final int mN = modifiers.size();
+            if( mN == 0 ) return "";
+            final StringBuilder b = clear( stringBuilder );
+            for( int m = 0;; ) {
+                b.append( modifiers.get( m ));
+                if( ++m == mN ) break;
+                b.append( ' ' ); } // Separator.
+            return b.toString(); }};
+
+
+
     private static final String namespace = "data:,Breccia/XML";
 
 
@@ -655,6 +648,23 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                 if( ++i == iN ) break;
                 b.append( ' ' ); } // Separator.
             return b.toString(); }};
+
+
+
+   // ┈┈┈  l a t e   d e c l a r a t i o n s  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+
+    private final Attribute[] attributesCommandPoint = { xunc, lineNumber, typestamp, modifiers };
+
+
+    private final Attribute[] attributesFractum =      { xunc, lineNumber, typestamp }; // [LN]
+
+
+    private final Attribute[] attributesHead =         { xunc, xuncLineEnds }; /* Each proper
+          to the fractal head (as opposed to the whole fractum), or to all grana. */
+
+
+    private final Attribute[] attributesOther =        { xunc };
 
 
 
