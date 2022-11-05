@@ -354,7 +354,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                                 assert fractum instanceof FileFractum; //    it must be a file fractum.
                                 break; } // Continuing with `interstate_traversal`.
                             this.components = null;                  // b) The fractal head is flat.
-                            assert false: "Dead code"; } // [FH]
+                            assert false: "Live code"; } // [FH]
                         else {                                     // c) The fractal head is composite.
                             this.components = components;
                             this.componentIndex = 0;
@@ -383,7 +383,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                     translationProcess = head_content_traversal;
                     if( components == null ) {
                         eventTypeNext = CHARACTERS;
-                        assert false: "Dead code"; } // [FH]
+                        assert false: "Live code"; } // [FH]
                     else assert eventTypeNext == START_ELEMENT; }
                 else {
                     assert eventType == END_ELEMENT;
