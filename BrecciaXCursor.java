@@ -45,7 +45,8 @@ import static Java.StringBuilding.clear;
   *
   * <p>Moreover each of the following attributes is given to any fractum to which it is proper.</p><ul>
   *
-  *     <li>`{@linkplain Breccia.parser.CommandPoint#modifiers() modifiers}`</li></ul>
+  *     <li>`{@linkplain Breccia.parser.CommandPoint#modifiers() modifiers}`</li>
+  *     <li>`{@linkplain Breccia.parser.ResourceIndicant#qualifiers() qualifiers}`</li></ul>
   *
   * <p>This translator emits no ignorable whitespace.</p>
   *
@@ -404,7 +405,8 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
                     localNameStack.push( localName = component.tagName() );
                     granum = component;
                     location = locationFromGranum;
-                    attributes = attributesOther;
+                    if( component instanceof ResourceIndicant ) attributes = attributesResourceIndicant;
+                    else attributes = attributesOther;
 
                   // clean up, preparing for the next event
                   // ┈┈┈┈┈┈┈┈
@@ -582,16 +584,7 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
     private final Attribute modifiers = new Attribute( "modifiers" ) {
-        @Override String value() {
-            final List<String> modifiers = source.asCommandPoint().modifiers();
-            final int mN = modifiers.size();
-            if( mN == 0 ) return "";
-            final StringBuilder b = clear( stringBuilder );
-            for( int m = 0;; ) {
-                b.append( modifiers.get( m ));
-                if( ++m == mN ) break;
-                b.append( ' ' ); } // Separator.
-            return b.toString(); }};
+        @Override String value() { return spaceDelimited( source.asCommandPoint().modifiers() ); }};
 
 
 
@@ -603,7 +596,26 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
+    private final Attribute qualifiers = new Attribute( "qualifiers" ) {
+        @Override String value() { return spaceDelimited( ((ResourceIndicant)granum).qualifiers() ); }};
+
+
+
     private Cursor source;
+
+
+
+    /* @paramImplied #stringBuilder
+     */
+    private final String spaceDelimited( final List<String> strings ) {
+        final int sN = strings.size();
+        if( sN == 0 ) return "";
+        final StringBuilder b = clear( stringBuilder );
+        for( int s = 0;; ) {
+            b.append( strings.get( s ));
+            if( ++s == sN ) break;
+            b.append( ' ' ); } // Separator.
+        return b.toString(); }
 
 
 
@@ -654,17 +666,20 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
    // ┈┈┈  l a t e   d e c l a r a t i o n s  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 
-    private final Attribute[] attributesCommandPoint = { xunc, lineNumber, typestamp, modifiers };
+    private final Attribute[] attributesCommandPoint =     { xunc, lineNumber, typestamp, modifiers };
 
 
-    private final Attribute[] attributesFractum =      { xunc, lineNumber, typestamp }; // [LN]
+    private final Attribute[] attributesFractum =          { xunc, lineNumber, typestamp }; // [LN]
 
 
-    private final Attribute[] attributesHead =         { xunc, xuncLineEnds }; /* Each proper
+    private final Attribute[] attributesHead =             { xunc, xuncLineEnds }; /* Each proper
           to the fractal head (as opposed to the whole fractum), or to all grana. */
 
 
-    private final Attribute[] attributesOther =        { xunc };
+    private final Attribute[] attributesResourceIndicant = { xunc, qualifiers };
+
+
+    private final Attribute[] attributesOther =            { xunc };
 
 
 
