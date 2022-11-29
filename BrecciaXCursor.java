@@ -623,13 +623,6 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-    static enum TranslationProcess { // Access is non-private only to allow a static `import` at top.
-        interstate_traversal,
-        head_encapsulation,
-        head_content_traversal }
-
-
-
     private TranslationProcess translationProcess;
 
 
@@ -714,7 +707,17 @@ public final class BrecciaXCursor implements AutoCloseable, XStreamConstants, XM
 
 
 
-        abstract String value(); }}
+        abstract String value(); }
+
+
+
+   // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+
+    static enum TranslationProcess { // Access is non-private only to allow a static `import` at top.
+        interstate_traversal,
+        head_encapsulation,
+        head_content_traversal }}
 
 
 
