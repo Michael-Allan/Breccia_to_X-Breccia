@@ -25,6 +25,7 @@ import static Java.StringBuilding.clear;
   * If `EMPTY`, then this translator emits no elements.  Otherwise, for each granum `g`,
   * this translator emits an element named `g.{@linkplain Breccia.parser.Granum#tagName() tagName}`.
   * Further it emits an element named `Head` to encapsulate the content of each fractal head.
+  * (All body fracta have heads.  The file fractum alone is potentially headless.)
   * The namespace for all emitted elements is `{@value #namespace}`.</p>
   *
   * <p>The element for each fractum is given the following attributes.</p><ul>
@@ -33,7 +34,7 @@ import static Java.StringBuilding.clear;
   *     <li>`{@linkplain Breccia.parser.ParseState#typestamp() typestamp}`</li>
   *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li></ul>
   *
-  * <p>Its `Head` element is given these attributes:</p><ul>
+  * <p>Its `Head` element, if any, is given these attributes:</p><ul>
   *
   *     <li>`{@linkplain Breccia.parser.Granum#xunc() xunc}`</li>
   *     <li>`xuncLineEnds`, the value being a space delimited list of each
