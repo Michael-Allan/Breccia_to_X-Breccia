@@ -11,7 +11,7 @@ Installation instructions for project Breccia to X-Breccia
                 / The command directory is where project installations are accessible by their
                   proper paths.  The present project, for example, will shortly be accessible
                   at `Breccia/XML/translator`.
-                    : see `^^command directory$` @ http://reluk.ca/project/lexicon.brec
+                    : see `^*command directory$` @ http://reluk.ca/project/lexicon.brec
             >+ git clone http://reluk.ca/var/repo/git/Breccia_to_X-Breccia.git Breccia/XML/translator
         + Build the software.
             : see http://reluk.ca/project/building/Makeshift/bin/build.brec
@@ -20,7 +20,7 @@ Installation instructions for project Breccia to X-Breccia
     rebuild script
         - If you expect to modify the source code of dependencies (direct or indirect),
           then a rebuild script may be useful.
-            : re `dependencies` see `^^.\+ Ensure the following projects are installed`
+            : re `dependencies` see `^*.\+ Ensure the following projects are installed`
             : re `rebuild script` e.g. http://reluk.ca/project/Breccia/XML/translator/build-all
 
     Web publication
