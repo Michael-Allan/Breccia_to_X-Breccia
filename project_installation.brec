@@ -3,7 +3,7 @@ Installation instructions for the Breccia to X-Breccia translator
     initial set-up
         1+ Ensure the following projects are installed.
             • Makeshift
-                : see http://reluk.ca/project/building/Makeshift/
+                : see http://reluk.ca/project/Makeshift/
             • Breccia Parser
                 : see http://reluk.ca/project/Breccia/parser/
         2+ Install the files of the present project.
@@ -14,7 +14,7 @@ Installation instructions for the Breccia to X-Breccia translator
                     : see `^*command directory$` @ http://reluk.ca/project/glossary.brec
             >+ git clone http://reluk.ca/var/repo/git/Breccia_to_X-Breccia.git Breccia/XML/translator
         + Build the software.
-            : see http://reluk.ca/project/building/Makeshift/bin/build.brec
+            : see http://reluk.ca/project/Makeshift/bin/build.brec
             >+ build Breccia/XML/translator class-files
 
     rebuild script
